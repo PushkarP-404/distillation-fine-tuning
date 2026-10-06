@@ -25,7 +25,7 @@ import datetime
 from collections import Counter
 from typing import List, Dict, Tuple, Optional
 
-# ── Inference via llama-server (no GPU required on the VM) ──────────────────
+# Inference via llama-server (no GPU required on the VM)
 
 import urllib.request
 import urllib.error
@@ -82,7 +82,7 @@ def predict_intent(prompt: str, llama_url: str = LLAMA_URL) -> str:
         return "other"
 
 
-# ── Evaluation engine ────────────────────────────────────────────────────────
+# Evaluation engine
 
 def evaluate(
     test_examples: List[Dict],
@@ -156,7 +156,7 @@ def evaluate(
     }
 
 
-# ── Comparison & deployment gate ─────────────────────────────────────────────
+# Comparison & deployment gate
 
 def compare_and_gate(
     old_result: Dict,
@@ -192,7 +192,7 @@ def compare_and_gate(
     return True
 
 
-# ── Report generation ─────────────────────────────────────────────────────────
+# Report generation
 
 def save_report(result: Dict, label: str, output_dir: str = ".") -> str:
     """Save evaluation result as a timestamped JSON report."""
@@ -218,7 +218,7 @@ def print_per_intent_table(result: Dict) -> None:
         print(f"  {intent:<22} {c:>7} {t:>7} {acc*100:>8.1f}%  {bar}")
 
 
-# ── CLI ───────────────────────────────────────────────────────────────────────
+# CLI
 
 def load_test_examples(path: str, test_split: float = 0.1) -> List[Dict]:
     """Load windowed training examples and return the held-out test portion."""

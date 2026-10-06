@@ -50,7 +50,7 @@ except ImportError:
     AUTO_LABEL_AVAILABLE = False
     print("[WARN] auto_label.py not found — labeling will be skipped.")
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+# Configuration
 
 AI_AGENT_BASE     = os.environ.get("AI_AGENT_LOG_DIR", "/var/ai-agent")
 TRAINING_DATA_DIR = os.path.join(AI_AGENT_BASE, "training_data")
@@ -65,7 +65,7 @@ MIN_ACCURACY          = float(os.environ.get("FINETUNE_MIN_ACCURACY", "0.80"))
 MAX_TRAINING_EXAMPLES = int(os.environ.get("FINETUNE_MAX_EXAMPLES", "50000"))
 
 
-# ── Step 1: Collect recent data ───────────────────────────────────────────────
+# Step 1: Collect recent data
 
 def collect_recent_data(days: int = DAYS_LOOKBACK) -> List[Dict]:
     """Load raw syscall records modified within the past *days* days."""
@@ -116,7 +116,7 @@ def collect_recent_data(days: int = DAYS_LOOKBACK) -> List[Dict]:
     return raw
 
 
-# ── Step 2: Label new data ────────────────────────────────────────────────────
+# Step 2: Label new data
 
 def label_data(raw: List[Dict]) -> List[Dict]:
     """Apply adaptive labeling: heuristics + LLM spot-check."""
@@ -130,7 +130,7 @@ def label_data(raw: List[Dict]) -> List[Dict]:
     return labeled
 
 
-# ── Step 3: Merge with historical data ────────────────────────────────────────
+# Step 3: Merge with historical data
 
 def merge_with_history(new_labeled: List[Dict]) -> List[Dict]:
     """Load historical labeled data, append new, deduplicate."""
@@ -174,7 +174,7 @@ def merge_with_history(new_labeled: List[Dict]) -> List[Dict]:
     return deduped
 
 
-# ── Step 4: Build windowed examples and trigger training ──────────────────────
+# Step 4: Build windowed examples and trigger training
 
 def build_and_save_training_examples(labeled: List[Dict]) -> str:
     """Build windowed examples and save to a timestamped JSONL file."""
@@ -219,7 +219,7 @@ def run_finetuning(dataset_path: str) -> bool:
         return False
 
 
-# ── Step 5: Evaluate and deploy ───────────────────────────────────────────────
+# Step 5: Evaluate and deploy
 
 def evaluate_and_deploy(windowed_path: str) -> bool:
     """Run evaluate_model.py; return True if deployment approved."""
@@ -242,7 +242,7 @@ def evaluate_and_deploy(windowed_path: str) -> bool:
     return approved
 
 
-# ── Orchestrator ──────────────────────────────────────────────────────────────
+# Orchestrator
 
 def run_monthly_job(label_only: bool = False) -> None:
     """Execute the full monthly fine-tuning pipeline."""
@@ -284,7 +284,7 @@ def run_monthly_job(label_only: bool = False) -> None:
     print(f"\n  Job complete at {datetime.datetime.utcnow().isoformat()}Z")
 
 
-# ── Daemon / scheduler mode ───────────────────────────────────────────────────
+# Daemon / scheduler mode
 
 def run_daemon() -> None:
     """Run as a daemon that fires the job on the 1st of each month at midnight."""
@@ -329,7 +329,7 @@ def _simple_scheduler() -> None:
         time.sleep(3600)  # Check every hour
 
 
-# ── CLI ───────────────────────────────────────────────────────────────────────
+# CLI
 
 def main():
     parser = argparse.ArgumentParser(

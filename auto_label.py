@@ -33,7 +33,7 @@ import urllib.error
 from collections import Counter, deque
 from typing import List, Dict, Any, Optional
 
-# ── Part 3a: Heuristic auto-labeler ─────────────────────────────────────────
+# Part 3a: Heuristic auto-labeler
 
 _NETWORK_SYSCALLS = frozenset([
     "connect", "bind", "listen", "accept", "accept4",
@@ -101,7 +101,7 @@ def auto_label_syscall(syscall_record: Dict[str, Any]) -> str:
     return "other"
 
 
-# ── Part 3a: LLM-assisted labeler ───────────────────────────────────────────
+# Part 3a: LLM-assisted labeler
 
 LLAMA_URL = "http://127.0.0.1:11434/completion"
 VALID_LABELS = frozenset([
@@ -186,7 +186,7 @@ def _query_llm_for_label(prompt: str, llama_url: str) -> str:
         return "other"
 
 
-# ── Part 3b: Training dataset builder ───────────────────────────────────────
+# Part 3b: Training dataset builder
 
 def build_training_dataset(
     labeled_syscalls: List[Dict[str, Any]],
@@ -251,7 +251,7 @@ def print_intent_distribution(examples: List[Dict[str, Any]]) -> None:
     print(f"  {'TOTAL':<20} {total:>6}")
 
 
-# ── Part 4a: Continuous learning — monthly labeling job ─────────────────────
+# Part 4a: Continuous learning — monthly labeling job
 
 def label_new_data_with_spotcheck(
     raw_syscalls: List[Dict[str, Any]],
@@ -275,7 +275,7 @@ def label_new_data_with_spotcheck(
     return labeled
 
 
-# ── CLI entry point ──────────────────────────────────────────────────────────
+# CLI entry point
 
 if __name__ == "__main__":
     import sys

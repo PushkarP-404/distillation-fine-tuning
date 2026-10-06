@@ -107,7 +107,7 @@ def main():
     print("3. Tell llama-server to load the adapter dynamically!")
 
 
-# ── Part 4b: Per-process-type multi-adapter training ─────────────────────────
+# Part 4b: Per-process-type multi-adapter training
 
 PROCESS_TYPES_TO_TRAIN = ["nginx", "python3", "postgres", "redis", "node", "sh"]
 
@@ -221,7 +221,7 @@ def multi_adapter_train(
             torch.cuda.empty_cache()
 
 
-# ── Part 4b: Adapter selector (inference) ─────────────────────────────────────
+# Part 4b: Adapter selector (inference)
 
 _loaded_models: dict = {}
 
