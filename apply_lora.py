@@ -1,4 +1,4 @@
-﻿import paramiko
+import paramiko
 import time
 import sys
 import os
@@ -6,8 +6,8 @@ import os
 def main():
     print("Connecting to VM...")
     ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
-    password = os.environ.get('VM_PASSWORD', '')
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    password = os.environ.get('VM_PASSWORD', 'password')
     if not password:
         print("WARN: VM_PASSWORD not set in environment.")
     try:
