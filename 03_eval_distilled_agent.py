@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
@@ -39,7 +40,7 @@ def evaluate(model, tokenizer, test_file):
         
         # Build prompt using ChatML
         chat = [
-            {"role": "system", "content": "You are the operating system's kernel AI agent."},
+            {"role": "system", "content": "You are an expert Linux kernel security AI.\nYou must analyze the following syscall/process event query and provide a safety verdict.\nFirst, provide a brief Chain-of-Thought (CoT) reasoning block analyzing the risk.\nThen, output your final verdict in exact JSON format.\nExample output format:\nReasoning: The process is test_syscall and it is opening /etc/shadow which is a highly sensitive authentication file. This is dangerous unless it's a known authentication daemon.\nVerdict: {\"action\": \"DENY\", \"reason\": \"Unauthorized access to /etc/shadow\"}"},
             {"role": "user", "content": prompt}
         ]
         
@@ -47,19 +48,31 @@ def evaluate(model, tokenizer, test_file):
         inputs = tokenizer(text, return_tensors="pt").to(model.device)
         
         with torch.no_grad():
-            outputs = model.generate(**inputs, max_new_tokens=150, temperature=0.1, do_sample=False)
+            outputs = model.generate(**inputs, max_new_tokens=512, temperature=0.1, do_sample=False)
             
         response = tokenizer.decode(outputs[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True)
         
-        # Simple evaluation logic: check if the verdict action matches
-        expected_verdict = '"action": "ALLOW"' if '"action": "ALLOW"' in expected else '"action": "DENY"'
-        actual_verdict = '"action": "ALLOW"' if '"action": "ALLOW"' in response else '"action": "DENY"'
+        # Improved evaluation: Check for valid JSON and correctness
+        def extract_action(text):
+            match = re.search(r'\{.*\}', text, re.DOTALL)
+            if match:
+                try:
+                    parsed = json.loads(match.group(0))
+                    return parsed.get("action", "INVALID")
+                except json.JSONDecodeError:
+                    return "MALFORMED_JSON"
+            return "NO_JSON"
+
+        expected_action = extract_action(expected)
+        actual_action = extract_action(response)
         
-        if expected_verdict == actual_verdict:
+        if expected_action == actual_action and actual_action not in ["INVALID", "MALFORMED_JSON", "NO_JSON"]:
             correct += 1
             
         print(f"Query ID: {item.get('query_id')}")
-        print(f"Expected: {expected_verdict} | Actual: {actual_verdict}")
+        print(f"Expected: {expected_action} | Actual: {actual_action}")
+        if actual_action in ["MALFORMED_JSON", "NO_JSON"]:
+            print(f"RAW OUTPUT: {response}")
         print("-" * 50)
         
     acc = (correct / total) * 100 if total > 0 else 0
@@ -67,7 +80,7 @@ def evaluate(model, tokenizer, test_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--adapter", default="./adapters/distilled_lora", help="Path to distilled LoRA adapter")
+    parser.add_argument("--adapter", default="./adapters/os_agent_lora", help="Path to distilled LoRA adapter")
     parser.add_argument("--test", default="distilled_raw.jsonl", help="Path to evaluation dataset")
     args = parser.parse_args()
     

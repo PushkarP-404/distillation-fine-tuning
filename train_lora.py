@@ -8,7 +8,7 @@ from trl import SFTTrainer, SFTConfig
 # Configuration
 BASE_MODEL_ID = "HuggingFaceTB/SmolLM2-135M-Instruct"
 DATASET_PATH = os.environ.get("DATASET_PATH", "distilled_chatml.jsonl")  # Distilled ChatML
-OUTPUT_DIR = "./adapters/distilled_lora"
+OUTPUT_DIR = "./adapters/os_agent_lora"
 
 def main():
     print(f"Loading distilled dataset from {DATASET_PATH}...")
@@ -39,8 +39,8 @@ def main():
     )
 
     lora_config = LoraConfig(
-        r=16,                    
-        lora_alpha=32,           
+        r=32,                    
+        lora_alpha=64,           
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         lora_dropout=0.05,
         bias="none",
@@ -51,12 +51,15 @@ def main():
     training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
         dataset_text_field="text",
-        max_length=512,
+        max_length=1024,
         per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
         learning_rate=3e-4,
+        lr_scheduler_type="cosine",
+        warmup_ratio=0.1,
+        weight_decay=0.01,
         logging_steps=5,
-        num_train_epochs=3, # Train for 3 epochs on distilled data
+        num_train_epochs=20, # Increased for small dataset
         save_strategy="epoch",
         optim="adamw_torch",
         remove_unused_columns=False,
