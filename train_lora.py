@@ -59,7 +59,7 @@ def main():
         warmup_ratio=0.1,
         weight_decay=0.01,
         logging_steps=5,
-        num_train_epochs=20, # Increased for small dataset
+        num_train_epochs=10, # Increased for small dataset
         save_strategy="epoch",
         optim="adamw_torch",
         remove_unused_columns=False,

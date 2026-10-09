@@ -1,4 +1,6 @@
 import os
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 import json
 import re
 import torch
@@ -72,7 +74,7 @@ def evaluate(model, tokenizer, test_file):
         print(f"Query ID: {item.get('query_id')}")
         print(f"Expected: {expected_action} | Actual: {actual_action}")
         if actual_action in ["MALFORMED_JSON", "NO_JSON"]:
-            print(f"RAW OUTPUT: {response}")
+            print(f"RAW OUTPUT: {response}".encode('utf-8', 'replace').decode('utf-8'))
         print("-" * 50)
         
     acc = (correct / total) * 100 if total > 0 else 0

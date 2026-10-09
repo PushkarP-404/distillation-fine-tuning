@@ -33,35 +33,40 @@ def generate_full_prompt(comm, query):
 - Target PID: {pid}
 - Query: {query}
 
-Provide a concise, direct, 2-3 sentence system safety analysis and actionable recommendation."""
+Provide a concise, direct system safety analysis and verdict."""
 
 async def generate_batch(client: AsyncGroq, sem: asyncio.Semaphore, batch_id: int):
     async with sem:
         print(f"Requesting synthetic batch {batch_id}...")
-        try:
-            completion = await client.chat.completions.create(
-                model="openai/gpt-oss-120b",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": "Generate a new diverse batch of 20 queries."}
-                ],
-                temperature=0.7, # Higher temperature for variety
-                max_tokens=4000
-            )
-            content = completion.choices[0].message.content.strip()
-            # Strip markdown if model accidentally adds it
-            if content.startswith("```json"):
-                content = content[7:]
-            if content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
+        for attempt in range(10):
+            try:
+                completion = await client.chat.completions.create(
+                    model="openai/gpt-oss-120b",
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": "Generate a new diverse batch of 20 queries."}
+                    ],
+                    temperature=0.7,
+                    max_tokens=4000
+                )
+                content = completion.choices[0].message.content.strip()
+                if content.startswith("```json"): content = content[7:]
+                if content.startswith("```"): content = content[3:]
+                if content.endswith("```"): content = content[:-3]
                 
-            data = json.loads(content)
-            return data
-        except Exception as e:
-            print(f"[ERROR] Batch {batch_id} failed: {e}")
-            return []
+                data = json.loads(content)
+                return data
+            except Exception as e:
+                err_str = str(e)
+                if "429" in err_str or "rate limit" in err_str.lower():
+                    wait_time = 15 + attempt * 5
+                    print(f"Rate limit on batch {batch_id}, waiting {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    print(f"[ERROR] Batch {batch_id} failed: {e}")
+                    return []
+        print(f"[ERROR] Batch {batch_id} max retries reached.")
+        return []
 
 async def main():
     parser = argparse.ArgumentParser()
