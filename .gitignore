@@ -3,3 +3,5 @@ llama.cpp/
 *.gguf
 dataset.jsonl
 __pycache__/
+distilled_raw.jsonl
+distilled_chatml.jsonl

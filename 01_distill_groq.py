@@ -19,20 +19,29 @@ Verdict: {"action": "DENY", "reason": "Unauthorized access to /etc/shadow"}
 async def fetch_teacher_response(client: AsyncGroq, sem: asyncio.Semaphore, query_id: int, prompt: str):
     async with sem:
         print(f"Requesting distillation for query_id: {query_id}")
-        try:
-            completion = await client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=250
-            )
-            return query_id, prompt, completion.choices[0].message.content
-        except Exception as e:
-            print(f"[ERROR] query_id {query_id}: {e}")
-            return query_id, prompt, None
+        for attempt in range(6):
+            try:
+                completion = await client.chat.completions.create(
+                    model="openai/gpt-oss-120b",
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.1,
+                    max_tokens=512
+                )
+                return query_id, prompt, completion.choices[0].message.content
+            except Exception as e:
+                err_str = str(e).lower()
+                if "rate limit" in err_str or "429" in err_str:
+                    wait_time = 12 + (attempt * 5)
+                    print(f"Rate limit for query_id {query_id}, waiting {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    print(f"[ERROR] query_id {query_id}: {e}")
+                    return query_id, prompt, None
+        print(f"[ERROR] query_id {query_id}: Max retries reached.")
+        return query_id, prompt, None
 
 async def main():
     parser = argparse.ArgumentParser()
@@ -56,7 +65,10 @@ async def main():
         for line in f:
             if not line.strip():
                 continue
-            data = json.loads(line)
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                continue
             q_id = data.get("query_id")
             prompt = data.get("prompt")
             if prompt and q_id not in unique_queries:

@@ -13,7 +13,7 @@ def format_chatml(input_file, output_file):
             
             # SmolLM2 Instruct format using standard HuggingFace messages
             messages = [
-                {"role": "system", "content": "You are the operating system's kernel AI agent."},
+                {"role": "system", "content": "You are an expert Linux kernel security AI.\nYou must analyze the following syscall/process event query and provide a safety verdict.\nFirst, provide a brief Chain-of-Thought (CoT) reasoning block analyzing the risk.\nThen, output your final verdict in exact JSON format.\nExample output format:\nReasoning: The process is test_syscall and it is opening /etc/shadow which is a highly sensitive authentication file. This is dangerous unless it's a known authentication daemon.\nVerdict: {\"action\": \"DENY\", \"reason\": \"Unauthorized access to /etc/shadow\"}"},
                 {"role": "user", "content": data["prompt"]},
                 {"role": "assistant", "content": data["teacher_completion"]}
             ]
