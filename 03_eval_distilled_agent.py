@@ -1,6 +1,7 @@
 import os
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
+sys.modules['torchvision'] = None
 import json
 import re
 import torch
@@ -26,19 +27,23 @@ def load_models(adapter_path):
     model.eval()
     return model, tokenizer
 
-def evaluate(model, tokenizer, test_file):
+def evaluate(model, tokenizer, test_file, num_samples=20):
     print(f"Loading test set from {test_file}...")
     
     with open(test_file, 'r') as f:
         data = [json.loads(line) for line in f if line.strip()]
         
     correct = 0
-    total = min(len(data), 50) # Evaluate on subset
+    total = min(len(data), num_samples) # Evaluate on subset
     
     print(f"Evaluating {total} samples...")
     for item in data[:total]:
-        prompt = item["prompt"]
-        expected = item.get("teacher_completion", "")
+        if "messages" in item:
+            prompt = next(m["content"] for m in item["messages"] if m["role"] == "user")
+            expected = next(m["content"] for m in item["messages"] if m["role"] == "assistant")
+        else:
+            prompt = item["prompt"]
+            expected = item.get("teacher_completion", "")
         
         # Build prompt using ChatML
         chat = [
@@ -83,8 +88,9 @@ def evaluate(model, tokenizer, test_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--adapter", default="./adapters/os_agent_lora", help="Path to distilled LoRA adapter")
-    parser.add_argument("--test", default="distilled_raw.jsonl", help="Path to evaluation dataset")
+    parser.add_argument("--test", default="distilled_chatml.jsonl", help="Path to evaluation dataset")
+    parser.add_argument("--samples", type=int, default=20, help="Number of test samples to evaluate")
     args = parser.parse_args()
     
     model, tokenizer = load_models(args.adapter)
-    evaluate(model, tokenizer, args.test)
+    evaluate(model, tokenizer, args.test, args.samples)
