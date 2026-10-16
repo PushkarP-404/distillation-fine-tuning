@@ -3,11 +3,17 @@ import time
 import sys
 import os
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 def main():
     print("Connecting to VM...")
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    password = os.environ.get('VM_PASSWORD', 'password')
+    password = os.environ.get('VM_PASSWORD', 'password_123')
     if not password:
         print("WARN: VM_PASSWORD not set in environment.")
     try:
