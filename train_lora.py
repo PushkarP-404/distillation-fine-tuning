@@ -5,24 +5,34 @@ from peft import LoraConfig, TaskType
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import SFTTrainer, SFTConfig
 
-# Configuration
-BASE_MODEL_ID = "HuggingFaceTB/SmolLM2-135M-Instruct"
-DATASET_PATH = os.environ.get("DATASET_PATH", "distilled_chatml.jsonl")  # Distilled ChatML
-OUTPUT_DIR = "./adapters/os_agent_lora"
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Train LoRA adapter for AI-Agent OS")
+    parser.add_argument("--dataset", default="planning_chatml.jsonl", help="ChatML dataset path")
+    parser.add_argument("--output-dir", default="./adapters/os_planner_lora", help="Output directory for LoRA adapter")
+    parser.add_argument("--model-id", default="HuggingFaceTB/SmolLM2-135M-Instruct", help="Base HuggingFace model")
+    parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
+    parser.add_argument("--batch-size", type=int, default=2, help="Per device batch size")
+    return parser.parse_args()
 
 def main():
-    print(f"Loading distilled dataset from {DATASET_PATH}...")
-    if not os.path.exists(DATASET_PATH):
-        print(f"ERROR: Dataset not found at {DATASET_PATH}.")
-        print("Run 01_distill_groq.py and 02_format_dataset.py first.")
+    args = parse_args()
+    dataset_path = args.dataset
+    if not os.path.exists(dataset_path) and os.path.exists("distilled_chatml.jsonl"):
+        dataset_path = "distilled_chatml.jsonl"
+    
+    print(f"Loading dataset from {dataset_path}...")
+    if not os.path.exists(dataset_path):
+        print(f"ERROR: Dataset not found at {dataset_path}.")
         return
 
     # Load via HF Datasets directly
-    dataset = load_dataset("json", data_files=DATASET_PATH, split="train")
+    dataset = load_dataset("json", data_files=dataset_path, split="train")
     print(f"Loaded {len(dataset)} training examples.")
 
-    print(f"Loading base model: {BASE_MODEL_ID}...")
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_ID)
+    print(f"Loading base model: {args.model_id}...")
+    tokenizer = AutoTokenizer.from_pretrained(args.model_id)
     tokenizer.pad_token = tokenizer.eos_token
     
     # HuggingFace Datasets map using ChatML template
@@ -49,17 +59,17 @@ def main():
 
     print("Configuring training arguments...")
     training_args = SFTConfig(
-        output_dir=OUTPUT_DIR,
+        output_dir=args.output_dir,
         dataset_text_field="text",
         max_length=1024,
-        per_device_train_batch_size=2,
+        per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=4,
         learning_rate=3e-4,
         lr_scheduler_type="cosine",
         warmup_ratio=0.1,
         weight_decay=0.01,
         logging_steps=5,
-        num_train_epochs=10, # Increased for small dataset
+        num_train_epochs=args.epochs,
         save_strategy="epoch",
         optim="adamw_torch",
         remove_unused_columns=False,
@@ -78,9 +88,9 @@ def main():
     print("Starting distillation fine-tuning...")
     trainer.train()
 
-    print(f"Training complete! Saving distilled LoRA adapter to {OUTPUT_DIR}...")
-    trainer.model.save_pretrained(OUTPUT_DIR)
-    tokenizer.save_pretrained(OUTPUT_DIR)
+    print(f"Training complete! Saving distilled LoRA adapter to {args.output_dir}...")
+    trainer.model.save_pretrained(args.output_dir)
+    tokenizer.save_pretrained(args.output_dir)
     
     print("\nNext steps:")
     print("1. Test using 03_eval_distilled_agent.py")

@@ -1,10 +1,21 @@
-﻿import os
+import os
 import subprocess
 import sys
 
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Convert LoRA weights to GGUF format")
+    default_dir = "adapters/os_planner_lora" if os.path.exists("adapters/os_planner_lora") else "adapters/os_agent_lora"
+    default_out = "os_planner_lora.gguf" if "planner" in default_dir else "os_agent_lora.gguf"
+    parser.add_argument("--lora-dir", default=default_dir, help="Directory containing fine-tuned LoRA adapter")
+    parser.add_argument("--output-file", default=default_out, help="Output GGUF file path")
+    return parser.parse_args()
+
 def main():
-    lora_dir = "adapters/os_agent_lora"
-    output_file = "os_agent_lora.gguf"
+    args = parse_args()
+    lora_dir = args.lora_dir
+    output_file = args.output_file
     
     print("==================================================")
     print("  AI-Agent OS: LoRA to GGUF Converter Tool  ")

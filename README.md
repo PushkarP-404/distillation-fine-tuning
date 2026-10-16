@@ -22,39 +22,59 @@ This repository contains the end-to-end pipeline for **Sequence-Level Knowledge 
 
 ## Pipeline Execution
 
-Run the following scripts sequentially to complete the distillation and training loop.
+The distillation pipeline supports two complementary agent roles:
+* **Track A — Kernel Security Auditor (`os_agent_lora.gguf`)**: Evaluates low-level syscalls (`sys_agent_query` Syscall 548) and issues `ALLOW` / `DENY` security verdicts.
+* **Track B — Autonomous OS Task Planner (`os_planner_lora.gguf`)**: Decomposes natural language user intents into structured, policy-verified execution plans (`dir.create`, `file.write`, `package.install`, `service.start`, etc.).
 
-### 1. Data Distillation (`01_distill_groq.py`)
-Reads the raw syscall telemetry from `dataset.jsonl` and queries the Groq API. The Llama 3.1 70B teacher model will generate a high-quality Chain-of-Thought reasoning block and the final JSON verdict.
-```bash
-python 01_distill_groq.py
-```
-*(Optional: use `--dry-run` to test on just 3 samples before processing the whole dataset).*
-**Output:** `distilled_raw.jsonl`
+---
 
-### 2. Format Dataset (`02_format_dataset.py`)
-Converts the raw teacher responses into the exact `ChatML` instruction format expected by the `SmolLM2-135M-Instruct` tokenizer. 
-```bash
-python 02_format_dataset.py
-```
-**Output:** `distilled_chatml.jsonl`
+### Track A: Syscall Security Pipeline
 
-### 3. Supervised Fine-Tuning (`train_lora.py`)
-Loads the ChatML dataset via HuggingFace Datasets and performs LoRA (Low-Rank Adaptation) fine-tuning on the base `SmolLM2-135M-Instruct` model.
-```bash
-python train_lora.py
-```
-**Output:** Fine-tuned adapter saved to `./adapters/distilled_lora/`
+1. **Data Distillation (`01_distill_groq.py`)**:
+   Queries Groq teacher model (`Llama 3.1 70B` or `Llama 3.3 70B`) on raw syscall events.
+   ```bash
+   python 01_distill_groq.py
+   ```
+2. **Format Dataset (`02_format_dataset.py`)**:
+   Converts teacher responses into ChatML:
+   ```bash
+   python 02_format_dataset.py --input distilled_raw.jsonl --output distilled_chatml.jsonl
+   ```
+3. **Supervised Fine-Tuning (`train_lora.py`)**:
+   ```bash
+   python train_lora.py --dataset distilled_chatml.jsonl --output-dir ./adapters/os_agent_lora
+   ```
+4. **Evaluate Agent (`03_eval_distilled_agent.py`)**:
+   ```bash
+   python 03_eval_distilled_agent.py
+   ```
 
-### 4. Evaluate Distilled Agent (`03_eval_distilled_agent.py`)
-Benchmarks the newly trained distilled LoRA adapter against the expected verdicts from the teacher model to ensure knowledge transfer was successful.
-```bash
-python 03_eval_distilled_agent.py
-```
+---
 
-### 5. Export and Deploy (`export_gguf.py` & `apply_lora.py`)
-Merge the adapter weights into the base model, export it to the GGUF format for edge deployment, and deploy it to the QEMU VM.
-```bash
-python export_gguf.py
-python apply_lora.py
-```
+### Track B: Autonomous Task Planner Pipeline
+
+1. **Generate Synthetic Planning Dataset (`generate_planning_dataset.py`)**:
+   Generates diverse OS task scenarios strictly validated against `harness_v2.validate_plan`:
+   ```bash
+   python generate_planning_dataset.py --count 1000 --output planning_dataset.jsonl
+   ```
+2. **Format into ChatML (`format_planning_dataset.py`)**:
+   Formats planning scenarios into `harness_v2.plan_prompt` ChatML format:
+   ```bash
+   python format_planning_dataset.py --input planning_dataset.jsonl --output planning_chatml.jsonl
+   ```
+3. **Train Planning LoRA (`train_lora.py`)**:
+   Fine-tunes the model on task planning:
+   ```bash
+   python train_lora.py --dataset planning_chatml.jsonl --output-dir ./adapters/os_planner_lora --epochs 3
+   ```
+4. **Evaluate Planning Agent (`eval_planning_agent.py`)**:
+   Benchmarks JSON parse rate, strict schema validity, and tool mapping accuracy:
+   ```bash
+   python eval_planning_agent.py --adapter ./adapters/os_planner_lora --dataset planning_dataset.jsonl --samples 25
+   ```
+5. **Export to GGUF (`export_gguf.py`)**:
+   Converts PEFT adapter to GGUF format for `llama-server`:
+   ```bash
+   python export_gguf.py --lora-dir adapters/os_planner_lora --output-file os_planner_lora.gguf
+   ```
