@@ -44,22 +44,25 @@ def merge_and_export_quantized(lora_dir: str, output_file: str, base_model_id: s
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     merged_temp_dir = "./temp_merged_model"
-    print(f"\n[1/3] Loading base model '{base_model_id}' and merging LoRA weights from '{lora_dir}'...")
-    tokenizer = AutoTokenizer.from_pretrained(base_model_id)
-    base_model = AutoModelForCausalLM.from_pretrained(
-        base_model_id,
-        torch_dtype=torch.float16,
-        device_map="auto"
-    )
+    if os.path.exists(os.path.join(merged_temp_dir, "model.safetensors")):
+        print(f"\n[1/3] Found existing merged model in '{merged_temp_dir}'. Skipping re-merge...")
+    else:
+        print(f"\n[1/3] Loading base model '{base_model_id}' and merging LoRA weights from '{lora_dir}'...")
+        tokenizer = AutoTokenizer.from_pretrained(base_model_id)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            base_model_id,
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
 
-    model = PeftModel.from_pretrained(base_model, lora_dir)
-    print("Fusing LoRA weights into base model layers...")
-    merged_model = model.merge_and_unload()
+        model = PeftModel.from_pretrained(base_model, lora_dir)
+        print("Fusing LoRA weights into base model layers...")
+        merged_model = model.merge_and_unload()
 
-    print(f"Saving merged FP16 checkpoint to {merged_temp_dir}...")
-    os.makedirs(merged_temp_dir, exist_ok=True)
-    merged_model.save_pretrained(merged_temp_dir)
-    tokenizer.save_pretrained(merged_temp_dir)
+        print(f"Saving merged FP16 checkpoint to {merged_temp_dir}...")
+        os.makedirs(merged_temp_dir, exist_ok=True)
+        merged_model.save_pretrained(merged_temp_dir)
+        tokenizer.save_pretrained(merged_temp_dir)
 
     print(f"\n[2/3] Converting merged model to GGUF format...")
     convert_script = os.path.join("llama.cpp", "convert_hf_to_gguf.py")
@@ -80,7 +83,9 @@ def merge_and_export_quantized(lora_dir: str, output_file: str, base_model_id: s
     print(f"\n[3/3] Applying {quant_type} quantization...")
     # Check for local llama-quantize binary or perform SSH VM quantization
     quantize_bin = None
+    ollama_quantize = os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\lib\ollama\llama-quantize.exe")
     for candidate in [
+        ollama_quantize,
         os.path.join("bin", "llama-quantize.exe"),
         os.path.join("llama.cpp", "build", "bin", "llama-quantize.exe"),
         "llama-quantize.exe",

@@ -98,7 +98,7 @@ def evaluate(model, tokenizer, test_file, num_samples=25):
             {"role": "user", "content": prompt}
         ]
         
-        text = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
+        text = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True) + "{"
         inputs = tokenizer(text, return_tensors="pt").to(model.device)
         
         with torch.no_grad():
@@ -109,7 +109,8 @@ def evaluate(model, tokenizer, test_file, num_samples=25):
                 pad_token_id=tokenizer.eos_token_id
             )
             
-        response = tokenizer.decode(outputs[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True).strip()
+        raw_gen = tokenizer.decode(outputs[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True).strip()
+        response = "{" + raw_gen
         
         expected_obj = extract_first_json_object(expected_raw) or {}
         actual_obj = extract_first_json_object(response)

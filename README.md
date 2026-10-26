@@ -51,30 +51,35 @@ The distillation pipeline supports two complementary agent roles:
 
 ---
 
-### Track B: Autonomous Task Planner Pipeline
+### Track B: Autonomous Task Planner Pipeline (Harness v2.3 Aligned)
 
 1. **Generate Synthetic Planning Dataset (`generate_planning_dataset.py`)**:
-   Generates diverse OS task scenarios strictly validated against `harness_v2.validate_plan`:
+   Generates rich OS task scenarios across all 9 intent categories (files, document, data, browser, email, coding, service, system, research), including multi-step chains with scratchpad captures, chunked phase decomposition, and error repairs:
    ```bash
-   python generate_planning_dataset.py --count 1000 --output planning_dataset.jsonl
+   python generate_planning_dataset.py --count 1500 --output planning_dataset.jsonl
    ```
+
 2. **Format into ChatML (`format_planning_dataset.py`)**:
-   Formats planning scenarios into `harness_v2.plan_prompt` ChatML format:
+   Formats planning scenarios into `harness_v2.plan_prompt` ChatML format with dynamic category-filtered tool catalogues matching the inference-time harness:
    ```bash
    python format_planning_dataset.py --input planning_dataset.jsonl --output planning_chatml.jsonl
    ```
+
 3. **Train Planning LoRA (`train_lora.py`)**:
-   Fine-tunes the model on task planning:
+   Fine-tunes the model on task planning with expanded sequence length (up to 1536 tokens) to prevent plan truncation:
    ```bash
-   python train_lora.py --dataset planning_chatml.jsonl --output-dir ./adapters/os_planner_lora --epochs 3
+   python train_lora.py --dataset planning_chatml.jsonl --output-dir ./adapters/os_planner_lora --epochs 3 --max-length 1536 --val-split 0.05
    ```
+
 4. **Evaluate Planning Agent (`eval_planning_agent.py`)**:
-   Benchmarks JSON parse rate, strict schema validity, and tool mapping accuracy:
+   Benchmarks JSON parse rate, strict schema validity, tool catalogue compliance, and verification coverage:
    ```bash
    python eval_planning_agent.py --adapter ./adapters/os_planner_lora --dataset planning_dataset.jsonl --samples 25
    ```
+
 5. **Export to GGUF (`export_gguf.py`)**:
-   Converts PEFT adapter to GGUF format for `llama-server`:
+   Converts PEFT adapter to GGUF format for in-guest `llama-server` (constrained by `plan_grammar.gbnf`):
    ```bash
-   python export_gguf.py --lora-dir adapters/os_planner_lora --output-file os_planner_lora.gguf
+   python export_gguf.py --lora-dir adapters/os_planner_lora --output-file os_planner_lora.gguf --quantization Q4_K_M
    ```
+
