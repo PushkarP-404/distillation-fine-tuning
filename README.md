@@ -83,7 +83,7 @@ The distillation pipeline supports two complementary agent roles:
    Fine-tunes the model on task planning with expanded sequence length (up to 1536 tokens) to prevent plan truncation:
 
    ```bash
-   python train_lora.py --dataset planning_chatml.jsonl --output-dir ./adapters/os_planner_lora --epochs 3 --max-length 1536 --val-split 0.05
+   python train_lora.py --dataset planning_chatml.jsonl --output-dir ./adapters/os_planner_lora --epochs 3 --max-length 2048 --val-split 0.05
    ```
 
 4. **Evaluate Planning Agent (`eval_planning_agent.py`)**:

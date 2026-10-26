@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument("--batch-size", type=int, default=4, help="Per-device training batch size")
     parser.add_argument("--grad-accum", type=int, default=4, help="Gradient accumulation steps")
     parser.add_argument("--lr", type=float, default=2e-4, help="Learning rate")
-    parser.add_argument("--max-length", type=int, default=1536, help="Maximum sequence length (prevents plan truncation)")
+    parser.add_argument("--max-length", type=int, default=2048, help="Maximum sequence length (prevents plan truncation)")
     parser.add_argument("--val-split", type=float, default=0.05, help="Validation split ratio")
     return parser.parse_args()
 
