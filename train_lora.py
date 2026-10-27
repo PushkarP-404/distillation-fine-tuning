@@ -83,7 +83,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
         device_map="auto" if torch.cuda.is_available() else None,
-        torch_dtype=torch_dtype
+        dtype=torch_dtype
     )
 
     lora_config = LoraConfig(
@@ -113,6 +113,7 @@ def main():
         optim="adamw_torch",
         remove_unused_columns=False,
         use_cpu=not torch.cuda.is_available(),
+        fp16=torch.cuda.is_available(),
     )
 
     print("Initializing LoRA Trainer...")
