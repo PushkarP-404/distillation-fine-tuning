@@ -1,8 +1,8 @@
 # Distillation and Fine-Tuning Pipeline
 
-> Autonomous Task Planning (Harness v2.3) and Kernel Syscall Security Adaptation for AI-Agent OS.
+> Autonomous Task Planning (Harness v2.3) and Kernel Syscall Security Adaptation for Elenchus OS.
 
-This repository contains the end-to-end dataset generation, knowledge distillation, LoRA fine-tuning, evaluation, and GGUF quantization pipeline for AI-Agent OS. The target model is `HuggingFaceTB/SmolLM2-135M-Instruct`, specialized for local in-guest inference inside Alpine Linux via `llama-server`.
+This repository contains the end-to-end dataset generation, knowledge distillation, LoRA fine-tuning, evaluation, and GGUF quantization pipeline for Elenchus OS. The target model is `HuggingFaceTB/SmolLM2-135M-Instruct`, specialized for local in-guest inference inside Elenchus (Alpine-derived) via `llama-server`.
 
 ---
 
@@ -12,7 +12,7 @@ The fine-tuning pipeline supports two complementary operating system roles:
 
 ```
 +-----------------------------------------------------------------------------------+
-|                                 AI-Agent OS Roles                                 |
+|                                  Elenchus OS Roles                                |
 +-----------------------------------------+-----------------------------------------+
 | Track A: Kernel Syscall Security Auditor| Track B: Autonomous Task Planner        |
 | - Model: os_agent_lora.gguf (39 MB)     | - Model: os_planner_lora.gguf (100.6 MB) |
@@ -192,7 +192,7 @@ python export_gguf.py --lora-dir adapters/os_planner_lora --output-file os_plann
 
 ---
 
-## Deployment to Alpine VM
+## Deployment to Elenchus VM
 
 Once `os_planner_lora.gguf` is created:
 
@@ -202,7 +202,7 @@ Once `os_planner_lora.gguf` is created:
    ```
 
 2. **Configure OpenRC Service**:
-   Inside the Alpine VM, edit `/etc/init.d/llama-server` or set `/etc/conf.d/llama-server`:
+   Inside the Elenchus VM, edit `/etc/init.d/llama-server` or set `/etc/conf.d/llama-server`:
    ```bash
    MODEL_PATH="/var/lib/ai-agent/models/os_planner_lora.gguf"
    ```

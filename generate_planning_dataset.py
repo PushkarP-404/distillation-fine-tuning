@@ -5,7 +5,7 @@ generate_planning_dataset.py (v2.0)
 Generates synthetic, structurally validated OS task planning datasets for training
 on-device SLMs (e.g., SmolLM2-135M / 360M / Qwen2.5-1.5B) to act as reliable autonomous OS planners.
 
-Upgraded to align with AI-Agent OS Harness v2.3:
+Upgraded to align with Elenchus OS Harness v2.3:
 - Full coverage of all 38 registered tools and 9 intent categories.
 - Long-horizon multi-step orchestration chains (3-8 steps) with DAG dependencies.
 - Dynamic variable propagation with 'captures' and '${scratchpad.var}' references.
@@ -55,7 +55,7 @@ SAMPLE_FILES = [
     ("todo.md", "# TODO\n- [ ] Deploy new version\n"),
     ("script.sh", "#!/bin/sh\necho 'Running verification task...'\n"),
     ("config.json", '{"version": "2.0", "active": true, "env": "prod"}\n'),
-    ("app.py", "#!/usr/bin/env python3\nprint('AI-Agent OS Online')\n"),
+    ("app.py", "#!/usr/bin/env python3\nprint('Elenchus OS Online')\n"),
     ("data.csv", "id,item,cost,department\n1,laptop,1200,eng\n2,monitor,350,design\n"),
     ("invoice.txt", "Invoice #1042 - Acme Corp - Total: $4,500 - Due: Net 30\n"),
     ("system_audit.log", "[INFO] Audit completed successfully at 12:00:00\n")

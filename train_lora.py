@@ -22,7 +22,7 @@ from trl import SFTTrainer, SFTConfig
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train LoRA adapter for AI-Agent OS Task Planner")
+    parser = argparse.ArgumentParser(description="Train LoRA adapter for Elenchus OS Task Planner")
     parser.add_argument("--dataset", default="planning_chatml.jsonl", help="ChatML dataset path")
     parser.add_argument("--output-dir", default="./adapters/os_planner_lora", help="Output directory for LoRA adapter")
     parser.add_argument("--model-id", default="HuggingFaceTB/SmolLM2-135M-Instruct", help="Base HuggingFace model ID")

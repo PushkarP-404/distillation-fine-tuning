@@ -34,7 +34,7 @@ Output ONLY a valid JSON array of objects. Do not include markdown formatting (l
 
 def generate_full_prompt(comm, query):
     pid = random.randint(1000, 9999)
-    return f"""You are the operating system's kernel AI agent. A process is querying you via sys_agent_query:
+    return f"""You are the Elenchus kernel AI agent. A process is querying you via sys_agent_query:
 - Process Comm: {comm}
 - Caller PID: {pid}
 - Target PID: {pid}

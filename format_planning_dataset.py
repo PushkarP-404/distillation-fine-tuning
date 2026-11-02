@@ -5,7 +5,7 @@ format_planning_dataset.py (v2.0)
 Converts generated planning pairs into standard ChatML instruction dataset
 for supervised fine-tuning (SFT) of SmolLM2-135M / 360M / Qwen2.5 using HuggingFace / TRL.
 
-Upgraded to align with AI-Agent OS Harness v2.3:
+Upgraded to align with Elenchus OS Harness v2.3:
 - Category-filtered tool subsets dynamically generated per intent via _build_tool_subset().
 - System prompt and schema matching harness_v2.plan_prompt() exactly.
 - Multi-mode support:
@@ -47,13 +47,15 @@ TOOL_TIPS = (
     "  browser.dump {} – dump accessibility elements of active browser tab\n"
     "  browser.click {id} – click browser element by ID\n"
     "  browser.type {id, text} – type text into browser element\n"
-    "  browser.screenshot {path?} – save browser screenshot to PNG"
+    "  browser.screenshot {path?} – save browser screenshot to PNG\n"
+    "  browser.extract {selector?} – extract text matching CSS selector from active browser tab\n"
+    "  app.launch {app, url?, path?} – launch GUI app (browser, file_manager, terminal, editor)"
 )
 
 
 def build_system_prompt(tools: list[str]) -> str:
     return (
-        "You are the AI-Agent OS planner. Return ONE JSON object only. "
+        "You are the Elenchus planner. Return ONE JSON object only. "
         "No markdown fences. No prose before or after the JSON.\n"
         "IMPORTANT: Your output is grammar-constrained. Emit ONLY the bare JSON object — no markdown, no prose.\n"
         f"Available tools: {tools}\n"
@@ -108,7 +110,7 @@ def format_dataset(input_path: str, output_path: str, default_inventory: list | 
                     continue
 
                 sys_prompt = (
-                    "You are the AI-Agent OS task decomposer. "
+                    "You are the Elenchus task decomposer. "
                     "Decompose the user intent into 2-5 ordered phases. "
                     "Return ONE JSON object only: "
                     '{"phases":[{"id":"phase1","goal":"...","tools_hint":["tool1",...]},...]}.\n'

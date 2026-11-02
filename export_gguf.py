@@ -131,7 +131,7 @@ def merge_and_export_quantized(lora_dir: str, output_file: str, base_model_id: s
 def main():
     args = parse_args()
     print("==================================================")
-    print("   AI-Agent OS: GGUF Model & LoRA Exporter Tool   ")
+    print("   Elenchus OS: GGUF Model & LoRA Exporter Tool   ")
     print("==================================================")
 
     if not os.path.exists(args.lora_dir):
@@ -147,7 +147,7 @@ def main():
     print("\n==================================================")
     print("                 DEPLOYMENT STEPS                 ")
     print("==================================================")
-    print("1. Deploy the model to the Alpine VM:")
+    print("1. Deploy the model to the Elenchus VM:")
     print(f"   scp -P 2222 {args.output_file} root@127.0.0.1:/var/lib/ai-agent/models/")
     print("\n2. In the VM, configure /etc/init.d/llama-server to point to the new model:")
     print(f"   MODEL_PATH=/var/lib/ai-agent/models/{os.path.basename(args.output_file)}")
